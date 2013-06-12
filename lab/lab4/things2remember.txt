@@ -1,0 +1,14 @@
+1.  Double link list with sentinel's code looks cleaner:
+    for insert: no need to deal with empty list case (never empty)
+    for remove: no need to take care of size 1, otherwise will have null
+    pointer violation
+
+2.  Double link list is trickier to implement:
+    when insert or remove, draw a general case, NOT boundary case; a.k.a. for
+    insert (size=1, excluding sentinel), while for delete (size =2, excluding
+    sentinel). It will work for boundary case like a charm
+
+    It will be important to know which link to break, the rule is not to lose
+    node when breaking!
+
+3.  Discussion for size=0 when remove is always needed
