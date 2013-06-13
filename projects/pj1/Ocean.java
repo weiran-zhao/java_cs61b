@@ -47,18 +47,6 @@ public class Ocean {
             hungerness=-1;    // means not a shark
         }
 
-/*        public Cell(int type) {
-            this.type = type;
-            if(type==SHARK)
-                hungerness=0;
-            else
-                hungerness=-1;
-        }
-
-        public Cell(int type, int hungerness) {
-            this.type=type;
-            this.hungerness = hungerness;
-        }*/
 
         /**
          *  sharkFull() set hungerness of shark to 0;
@@ -90,12 +78,12 @@ public class Ocean {
             }
         }
 
-       /** 
-         *  fishEaten() set cell of a fish to empty
+        /**
+         *  fishDie() set type to EMPTY and hungerness to -1
          */
-        public void fishEaten() {
-            if(type != FISH) {
-                System.out.println("You should not call this function, FAKE fish!");
+        public void fishDie() {
+            if(type !=FISH) {
+                System.out.println("YOu should not call this function, FAKE fish!");
             } else {
                 type=EMPTY;
                 hungerness=-1;
@@ -113,7 +101,7 @@ public class Ocean {
      *  @return value between 0~(width-1)
      */
     private int xCoord(int x) {
-        return x%width;
+        return (x%width+width)%width;
     }
 
     /**
@@ -122,13 +110,13 @@ public class Ocean {
      *  @return value between 0~(height-1)
      */
     private int yCoord(int y) {
-        return y%height;
+        return (y%height+height)%height;
     }
 
 
     /**
      *  types of neighbour of a cell possible
-     *  NOTHING   =       0;
+     *  NOTHING   =       0;      // no fish at all
      *  ONEFISH   =       1;
      *  TWOFISHPL =       2;      // two fishes or more
      *  ONESHARK  =       3;
@@ -153,13 +141,15 @@ public class Ocean {
     private int checkNeighbor(int x, int y) {
         int fish_cnt=0, shark_cnt=0, empty_cnt=0;
         // simply count neighbor
-        for(int hidx=y-1; hidx<=y+1;hidx++){
-            for(int widx=x-1; widx<=x+1;widx++) {
-                if((hidx==y) && (widx==x))
+        for(int yidx=y-1; yidx<=y+1;yidx++){
+            for(int xidx=x-1; xidx<=x+1;xidx++) {
+                if((yidx==y) && (xidx==x))
                     continue;
-                if(contents[yCoord(hidx)][xCoord(widx)].type==EMPTY) {
+                //System.out.println(yidx+" "+xidx);
+                //System.out.println(yCoord(yidx));
+                if(contents[yCoord(yidx)][xCoord(xidx)].type==EMPTY) {
                     empty_cnt+=1;
-                } else if (contents[yCoord(hidx)][xCoord(widx)].type==FISH) {
+                } else if (contents[yCoord(yidx)][xCoord(xidx)].type==FISH) {
                     fish_cnt+=1;
                 } else {
                     shark_cnt+=1;
@@ -180,13 +170,125 @@ public class Ocean {
             return TWOSHKPL;
         if(fish_cnt>=2)
             return TWOFISHPL;
-        if(empty_cnt==8)
+        if(fish_cnt==0)
             return NOTHING;
 
         // code should not run here
         assert 0>1;
         return -1;
     }
+
+    /**
+     *  cellUnchanged() copy cell content from pre_ocean to next_ocean
+     *  at (x,y) coordinate. This is object content copy
+     *  @param x x-coord
+     *  @param y y-coord
+     *  @param preOcean previous ocean state
+     */
+    private void cellUnchanged(int x, int y, Ocean preOcean) {
+        this.contents[yCoord(y)][xCoord(x)].type=
+            preOcean.contents[yCoord(y)][xCoord(x)].type;
+        this.contents[yCoord(y)][xCoord(x)].hungerness
+            =preOcean.contents[yCoord(y)][xCoord(x)].hungerness;
+    }
+
+    /** 
+     *  empty a cell indexed by (x,y)
+     *  @param x x-coord
+     *  @param y y-coord
+     */
+    private void emptyCell(int x, int y) {
+        this.contents[yCoord(y)][xCoord(x)].type=EMPTY;
+        this.contents[yCoord(y)][xCoord(x)].hungerness=-1;
+    }
+
+    /** 
+     *  cellNextState() takes in (x,y) coord, calculate state for (x,y)  
+     *  and return that state to nextOcean. This function fulfill rule
+     *  (1) to (8) at readme Part I
+     *  @param x x-coord
+     *  @param y y-coord
+     *  @param nextOcean next Ocean 
+     */
+    private void cellNextState(int x, int y, Ocean nextOcean) {
+        // figure out neighbor of target cell (x,y)
+        int fish_cnt=0, shark_cnt=0, empty_cnt=0;
+        // simply count neighbor
+        for(int xidx=x-1; xidx<=x+1;xidx++) {
+            for(int yidx=y-1; yidx<=y+1;yidx++){
+                if((yidx==y) && (xidx==x))
+                    continue;
+                if(contents[yCoord(yidx)][xCoord(xidx)].type==EMPTY) {
+                    empty_cnt+=1;
+                } else if (contents[yCoord(yidx)][xCoord(xidx)].type==FISH) {
+                    fish_cnt+=1;
+                } else {
+                    shark_cnt+=1;
+                }
+            }
+        }
+        assert (fish_cnt+shark_cnt+empty_cnt)==8;
+        // ============================================================
+        // assign value to nextOcean, follow rule (1) to (8)
+        // ============================================================
+        
+        // always copy old value first
+        nextOcean.cellUnchanged(x,y,this); 
+        // pre_ocean cell is shark
+        if(contents[yCoord(y)][xCoord(x)].type==SHARK) {
+            // rule 1
+            if(fish_cnt>=1) {
+                nextOcean.contents[yCoord(y)][xCoord(x)].sharkFull();
+                return;
+            }
+            // rule 2
+            if(fish_cnt==0) {
+                nextOcean.contents[yCoord(y)][xCoord(x)].sharkHunger();
+                return;
+            }
+        }
+        // pre_ocean cell is fish
+        if(contents[yCoord(y)][xCoord(x)].type==FISH) {
+            // rule 3
+            if(shark_cnt==0) {
+                // content unchanged
+                return;
+            }
+            // rule 4
+            if(shark_cnt==1) {
+                // fish dies
+                nextOcean.contents[yCoord(y)][xCoord(x)].fishDie();
+                return;
+            }
+            // rule 5
+            if(shark_cnt>=2) {
+                // new shark born
+                nextOcean.addShark(x,y);
+                return;
+            }
+        }
+        // pre_ocean cell is empty
+        if(contents[yCoord(y)][xCoord(x)].type==EMPTY) {
+            // rule 6
+            if(fish_cnt<2) {
+                // nothing magical happens
+                return;
+            }
+            // rule 7
+            if((fish_cnt>=2) && (shark_cnt<=1)) {
+                nextOcean.addFish(x,y);
+                return;
+            }
+            // rule 8
+            if((fish_cnt>=2) && (shark_cnt>=2)) {
+                nextOcean.addShark(x,y);
+                return;
+            }
+        }
+        // code should not run here
+        assert 1<0;
+    }
+
     /** 
      *  cellShark() takes in coordinates and calculate what happens
      *  after 1 timestep of simulation at that cell
@@ -197,16 +299,18 @@ public class Ocean {
      */
     private void cellShark(int x, int y, Ocean nextOcean) {
         int stateNeighbor = checkNeighbor(x,y);
+        // copy pre_ocean state at (x,y) to next_ocean
+        nextOcean.cellUnchanged(x,y,this);
         // not hungary
         if((stateNeighbor==ONEFISH) || (stateNeighbor==TWOFISHPL)) {
             nextOcean.contents[yCoord(y)][xCoord(x)].sharkFull();
+            return;
         }
         // nothing to eat
         if(stateNeighbor==NOTHING) {
-            nextOcean.contents[yCoord(y)][xCoord(x)].type=SHARK;
-            nextOcean.contents[yCoord(y)][xCoord(x)].hungerness=
-                contents[yCoord(y)][xCoord(x)].hungerness;
+            System.out.println("here");
             nextOcean.contents[yCoord(y)][xCoord(x)].sharkHunger();
+            return;
         }
     }
 
@@ -223,16 +327,18 @@ public class Ocean {
         // fish stays
         if((stateNeighbor==NOTHING) || (stateNeighbor==TWOFISHPL)
                 || (stateNeighbor==ONEFISH)) {
-            nextOcean.contents[yCoord(y)][xCoord(x)]=contents[yCoord(y)][xCoord(x)];
+            nextOcean.cellUnchanged(x,y,this);
             return;
                 }
         // fish Eaten empty
         if(stateNeighbor==ONESHARK) {
+            nextOcean.emptyCell(x,y);
             return;
         }
         // new shark born
         if(stateNeighbor==TWOSHKPL) {
             addShark(x,y);
+            return;
         }
     }
 
@@ -248,16 +354,18 @@ public class Ocean {
         int stateNeighbor = checkNeighbor(x,y);
         // Nothing happens
         if((stateNeighbor==NOTHING) || (stateNeighbor==ONEFISH)) {
-            nextOcean.contents[yCoord(y)][xCoord(x)]=contents[yCoord(y)][xCoord(x)];
+            nextOcean.cellUnchanged(x,y,this);
             return;
         }
         // new shark
         if(stateNeighbor==TWOFSPL) {
             nextOcean.addShark(x,y);
+            return;
         }
         // new fish born
         if(stateNeighbor==TWOFONESPL) {
             nextOcean.addFish(x,y);
+            return;
         }
     }
 
@@ -279,12 +387,11 @@ public class Ocean {
         this.starveTime=starveTime;
         // web said initial value is always 0, no need to do more
         contents = new Cell[height][width];
+        // have to initialize each element of 2-D array contents
         for(int yidx=0;yidx<height;yidx++) {
             for(int xidx=0;xidx<width;xidx++) {
                 contents[yidx][xidx]=new Cell();
-                System.out.print(contents[yidx][xidx].type+" ");
             }
-            System.out.println("");
         }
     }
 
@@ -357,19 +464,19 @@ public class Ocean {
 
     public Ocean timeStep() {
         Ocean nextOcean = new Ocean(width,height,starveTime);
-        for(int hidx=0; hidx <height; hidx++) {  // height index, y coord
-            for(int widx =0; widx<width; width++) {     // width index, x coord
+        for(int yidx=0; yidx <height; yidx++) {  // height index, y coord
+            for(int xidx =0; xidx<width; xidx++) {     // width index, x coord
                 // empty in original ocean
-                if(contents[yCoord(hidx)][xCoord(widx)].type==EMPTY) {
-                    nextOcean.cellEmpty(hidx,widx,nextOcean);
+                if(contents[yCoord(yidx)][xCoord(xidx)].type==EMPTY) {
+                    cellEmpty(xidx,yidx,nextOcean);
                 }
                 // fish in original ocean
-                if(contents[yCoord(hidx)][xCoord(widx)].type==FISH) {
-                    nextOcean.cellFish(hidx,widx,nextOcean);
+                if(contents[yCoord(yidx)][xCoord(xidx)].type==FISH) {
+                    cellFish(xidx,yidx,nextOcean);
                 }
                 // shark in original ocean
-                if(contents[yCoord(hidx)][xCoord(widx)].type==SHARK) {
-                    nextOcean.cellShark(hidx,widx,nextOcean);
+                if(contents[yCoord(yidx)][xCoord(xidx)].type==SHARK) {
+                    cellShark(xidx,yidx,nextOcean);
                 }
             }
         }
@@ -426,6 +533,7 @@ public class Ocean {
     public static void main(String[] argv) {
         System.out.println("testing");
         Ocean sea= new Ocean(5,2,1);
+        System.out.println(sea.contents[0][0].type);
     }
 
 }
