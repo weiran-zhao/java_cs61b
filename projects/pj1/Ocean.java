@@ -1,4 +1,7 @@
 /* Ocean.java */
+// Skeleton from cs61b at Berkeley
+// Filled by Ryan (Weiran) Zhao 
+// Wed,Jun 12th 2013 01:43:11 PM EDT
 
 /**
  *  The Ocean class defines an object that models an ocean full of sharks and
@@ -15,155 +18,414 @@
 
 public class Ocean {
 
-  /**
-   *  Do not rename these constants.  WARNING:  if you change the numbers, you
-   *  will need to recompile Test4.java.  Failure to do so will give you a very
-   *  hard-to-find bug.
-   */
+    /**
+     *  Do not rename these constants.  WARNING:  if you change the numbers, you
+     *  will need to recompile Test4.java.  Failure to do so will give you a very
+     *  hard-to-find bug.
+     */
 
-  public final static int EMPTY = 0;
-  public final static int SHARK = 1;
-  public final static int FISH = 2;
+    public final static int EMPTY = 0;
+    public final static int SHARK = 1;
+    public final static int FISH = 2;
 
-  /**
-   *  Define any variables associated with an Ocean object here.  These
-   *  variables MUST be private.
-   */
+    /**
+     *  Define any variables associated with an Ocean object here.  These
+     *  variables MUST be private.
+     */
+    private class Cell {
+        /** 
+         * cell represent a cell in ocean, indexed by x,y coordinates
+         * It can be empty, shark or fish
+         * for shark, there's a field representing it's hungerness,
+         * when hungerness > starveTime, it dies
+         */
+        public int type;     // can be shark, fish or empty
+        public int hungerness; // for shark only
+
+        public Cell() {
+            type =0;      // empty as default
+            hungerness=-1;    // means not a shark
+        }
+
+/*        public Cell(int type) {
+            this.type = type;
+            if(type==SHARK)
+                hungerness=0;
+            else
+                hungerness=-1;
+        }
+
+        public Cell(int type, int hungerness) {
+            this.type=type;
+            this.hungerness = hungerness;
+        }*/
+
+        /**
+         *  sharkFull() set hungerness of shark to 0;
+         *  but first it needs to check if this is a shark;
+         */
+        public void sharkFull() {
+            if(type != SHARK) {
+                System.out.println("You should not call this function, FAKE shark!");
+            } else {
+                hungerness=0;
+            }
+        }
+
+        /** 
+         *  sharkHunger() set hungerness of shark +1;
+         *  in case of hungerness > starveTime, shark dies and replaced by 
+         *  an empty cell
+         */
+        public void sharkHunger() {
+            if(type != SHARK) {
+                System.out.println("You should not call this function, FAKE shark!");
+            } else {
+                hungerness+=1;
+                // shark dies
+                if(hungerness>starveTime) {
+                    type = EMPTY;
+                    hungerness =-1;
+                }
+            }
+        }
+
+       /** 
+         *  fishEaten() set cell of a fish to empty
+         */
+        public void fishEaten() {
+            if(type != FISH) {
+                System.out.println("You should not call this function, FAKE fish!");
+            } else {
+                type=EMPTY;
+                hungerness=-1;
+            }
+        }
+    }
+    private int width;    //width of ocean AKA x-coord
+    private int height;   // height of ocean AKA y-coord
+    private Cell[][] contents;  // 2-D array representing contents of ocean
+    private int starveTime;   // starveTime for shark
+
+    /**
+     *  xCoord() takes in x-coordinate and make it within 0~(width-1);
+     *  @param x is the x-coordinate of ocean (can be any value)
+     *  @return value between 0~(width-1)
+     */
+    private int xCoord(int x) {
+        return x%width;
+    }
+
+    /**
+     *  yCoord() takes in y-coordinate and make it within 0~(height-1);
+     *  @param y is the y-coordinate of ocean (can be any value)
+     *  @return value between 0~(height-1)
+     */
+    private int yCoord(int y) {
+        return y%height;
+    }
 
 
+    /**
+     *  types of neighbour of a cell possible
+     *  NOTHING   =       0;
+     *  ONEFISH   =       1;
+     *  TWOFISHPL =       2;      // two fishes or more
+     *  ONESHARK  =       3;
+     *  TWOSHKPL  =       4;
+     *  TWOFSPL   =       5;      // two fishes and sharks or more
+     */
+    private final static int NOTHING   =       0;
+    private final static int ONEFISH   =       1;
+    private final static int TWOFISHPL =       2;      // two fishes or more
+    private final static int ONESHARK  =       3;
+    private final static int TWOSHKPL  =       4;
+    private final static int TWOFSPL   =       5;      // two fishes and sharks or more
+    private final static int TWOFONESPL=       6;      // 2 fishes one shark at most
 
-  /**
-   *  The following methods are required for Part I.
-   */
+    /**
+     *  checkNeighbor() checks neighbor of a cell and return a state (int)
+     *  one of which comes from above definitions
+     *  @param x x-coord;
+     *  @param y y-coord;
+     *  @return state of neighbor
+     */
+    private int checkNeighbor(int x, int y) {
+        int fish_cnt=0, shark_cnt=0, empty_cnt=0;
+        // simply count neighbor
+        for(int hidx=y-1; hidx<=y+1;hidx++){
+            for(int widx=x-1; widx<=x+1;widx++) {
+                if((hidx==y) && (widx==x))
+                    continue;
+                if(contents[yCoord(hidx)][xCoord(widx)].type==EMPTY) {
+                    empty_cnt+=1;
+                } else if (contents[yCoord(hidx)][xCoord(widx)].type==FISH) {
+                    fish_cnt+=1;
+                } else {
+                    shark_cnt+=1;
+                }
+            }
+        }
+        assert (fish_cnt+shark_cnt+empty_cnt)==8;
+        // now decide what state to return
+        if(fish_cnt==1)
+            return ONEFISH;
+        if(shark_cnt==1)
+            return ONESHARK;
+        if((shark_cnt>=2) && (fish_cnt>=2))
+            return TWOFSPL;
+        if((shark_cnt<=1) && (fish_cnt>=2))
+            return TWOFONESPL;
+        if(shark_cnt>=2)
+            return TWOSHKPL;
+        if(fish_cnt>=2)
+            return TWOFISHPL;
+        if(empty_cnt==8)
+            return NOTHING;
 
-  /**
-   *  Ocean() is a constructor that creates an empty ocean having width i and
-   *  height j, in which sharks starve after starveTime timesteps.
-   *  @param i is the width of the ocean.
-   *  @param j is the height of the ocean.
-   *  @param starveTime is the number of timesteps sharks survive without food.
-   */
+        // code should not run here
+        assert 0>1;
+        return -1;
+    }
+    /** 
+     *  cellShark() takes in coordinates and calculate what happens
+     *  after 1 timestep of simulation at that cell
+     *  This function corresponds to rule (1) and (2) in Readme
+     *  @param x x-coord
+     *  @param y y-coord
+     *  @param nextOcean next timestep ocean
+     */
+    private void cellShark(int x, int y, Ocean nextOcean) {
+        int stateNeighbor = checkNeighbor(x,y);
+        // not hungary
+        if((stateNeighbor==ONEFISH) || (stateNeighbor==TWOFISHPL)) {
+            nextOcean.contents[yCoord(y)][xCoord(x)].sharkFull();
+        }
+        // nothing to eat
+        if(stateNeighbor==NOTHING) {
+            nextOcean.contents[yCoord(y)][xCoord(x)].type=SHARK;
+            nextOcean.contents[yCoord(y)][xCoord(x)].hungerness=
+                contents[yCoord(y)][xCoord(x)].hungerness;
+            nextOcean.contents[yCoord(y)][xCoord(x)].sharkHunger();
+        }
+    }
 
-  public Ocean(int i, int j, int starveTime) {
-    // Your solution here.
-  }
+    /** 
+     *  cellFish() takes in coordinates and calculate what happens
+     *  after 1 timestep of simulation at that cell
+     *  This function corresponds to rule (3), (4) and (5) in Readme
+     *  @param x x-coord
+     *  @param y y-coord
+     *  @param nextOcean next timestep ocean
+     */
+    private void cellFish(int x, int y, Ocean nextOcean) {
+        int stateNeighbor = checkNeighbor(x,y);
+        // fish stays
+        if((stateNeighbor==NOTHING) || (stateNeighbor==TWOFISHPL)
+                || (stateNeighbor==ONEFISH)) {
+            nextOcean.contents[yCoord(y)][xCoord(x)]=contents[yCoord(y)][xCoord(x)];
+            return;
+                }
+        // fish Eaten empty
+        if(stateNeighbor==ONESHARK) {
+            return;
+        }
+        // new shark born
+        if(stateNeighbor==TWOSHKPL) {
+            addShark(x,y);
+        }
+    }
 
-  /**
-   *  width() returns the width of an Ocean object.
-   *  @return the width of the ocean.
-   */
+    /** 
+     *  cellEmpty() takes in coordinates and calculate what happens
+     *  after 1 timestep of simulation at that cell
+     *  This function corresponds to rule (6), (7) and (8) in Readme
+     *  @param x x-coord
+     *  @param y y-coord
+     *  @param nextOcean next timestep ocean
+     */
+    private void cellEmpty(int x, int y, Ocean nextOcean ) {
+        int stateNeighbor = checkNeighbor(x,y);
+        // Nothing happens
+        if((stateNeighbor==NOTHING) || (stateNeighbor==ONEFISH)) {
+            nextOcean.contents[yCoord(y)][xCoord(x)]=contents[yCoord(y)][xCoord(x)];
+            return;
+        }
+        // new shark
+        if(stateNeighbor==TWOFSPL) {
+            nextOcean.addShark(x,y);
+        }
+        // new fish born
+        if(stateNeighbor==TWOFONESPL) {
+            nextOcean.addFish(x,y);
+        }
+    }
 
-  public int width() {
-    // Replace the following line with your solution.
-    return 1;
-  }
+    /**
+     *  The following methods are required for Part I.
+     */
 
-  /**
-   *  height() returns the height of an Ocean object.
-   *  @return the height of the ocean.
-   */
+    /**
+     *  Ocean() is a constructor that creates an empty ocean having width i and
+     *  height j, in which sharks starve after starveTime timesteps.
+     *  @param i is the width of the ocean.
+     *  @param j is the height of the ocean.
+     *  @param starveTime is the number of timesteps sharks survive without food.
+     */
 
-  public int height() {
-    // Replace the following line with your solution.
-    return 1;
-  }
+    public Ocean(int i, int j, int starveTime) {
+        width=i;
+        height=j;
+        this.starveTime=starveTime;
+        // web said initial value is always 0, no need to do more
+        contents = new Cell[height][width];
+        for(int yidx=0;yidx<height;yidx++) {
+            for(int xidx=0;xidx<width;xidx++) {
+                contents[yidx][xidx]=new Cell();
+                System.out.print(contents[yidx][xidx].type+" ");
+            }
+            System.out.println("");
+        }
+    }
 
-  /**
-   *  starveTime() returns the number of timesteps sharks survive without food.
-   *  @return the number of timesteps sharks survive without food.
-   */
+    /**
+     *  width() returns the width of an Ocean object.
+     *  @return the width of the ocean.
+     */
 
-  public int starveTime() {
-    // Replace the following line with your solution.
-    return 1;
-  }
+    public int width() {
+        return width;
+    }
 
-  /**
-   *  addFish() places a fish in cell (x, y) if the cell is empty.  If the
-   *  cell is already occupied, leave the cell as it is.
-   *  @param x is the x-coordinate of the cell to place a fish in.
-   *  @param y is the y-coordinate of the cell to place a fish in.
-   */
+    /**
+     *  height() returns the height of an Ocean object.
+     *  @return the height of the ocean.
+     */
 
-  public void addFish(int x, int y) {
-    // Your solution here.
-  }
+    public int height() {
+        return height;
+    }
 
-  /**
-   *  addShark() (with two parameters) places a newborn shark in cell (x, y) if
-   *  the cell is empty.  A "newborn" shark is equivalent to a shark that has
-   *  just eaten.  If the cell is already occupied, leave the cell as it is.
-   *  @param x is the x-coordinate of the cell to place a shark in.
-   *  @param y is the y-coordinate of the cell to place a shark in.
-   */
+    /**
+     *  starveTime() returns the number of timesteps sharks survive without food.
+     *  @return the number of timesteps sharks survive without food.
+     */
 
-  public void addShark(int x, int y) {
-    // Your solution here.
-  }
+    public int starveTime() {
+        return starveTime;
+    }
 
-  /**
-   *  cellContents() returns EMPTY if cell (x, y) is empty, FISH if it contains
-   *  a fish, and SHARK if it contains a shark.
-   *  @param x is the x-coordinate of the cell whose contents are queried.
-   *  @param y is the y-coordinate of the cell whose contents are queried.
-   */
+    /**
+     *  addFish() places a fish in cell (x, y) if the cell is empty.  If the
+     *  cell is already occupied, leave the cell as it is.
+     *  @param x is the x-coordinate of the cell to place a fish in.
+     *  @param y is the y-coordinate of the cell to place a fish in.
+     */
 
-  public int cellContents(int x, int y) {
-    // Replace the following line with your solution.
-    return EMPTY;
-  }
+    public void addFish(int x, int y) {
+        contents[yCoord(y)][xCoord(x)].type=FISH;
+    }
 
-  /**
-   *  timeStep() performs a simulation timestep as described in README.
-   *  @return an ocean representing the elapse of one timestep.
-   */
+    /**
+     *  addShark() (with two parameters) places a newborn shark in cell (x, y) if
+     *  the cell is empty.  A "newborn" shark is equivalent to a shark that has
+     *  just eaten.  If the cell is already occupied, leave the cell as it is.
+     *  @param x is the x-coordinate of the cell to place a shark in.
+     *  @param y is the y-coordinate of the cell to place a shark in.
+     */
 
-  public Ocean timeStep() {
-    // Replace the following line with your solution.
-    return new Ocean(1, 1, 1);
-  }
+    public void addShark(int x, int y) {
+        contents[yCoord(y)][xCoord(x)].type=SHARK;
+        contents[yCoord(y)][xCoord(x)].hungerness=0;
+    }
 
-  /**
-   *  The following method is required for Part II.
-   */
+    /**
+     *  cellContents() returns EMPTY if cell (x, y) is empty, FISH if it contains
+     *  a fish, and SHARK if it contains a shark.
+     *  @param x is the x-coordinate of the cell whose contents are queried.
+     *  @param y is the y-coordinate of the cell whose contents are queried.
+     */
 
-  /**
-   *  addShark() (with three parameters) places a shark in cell (x, y) if the
-   *  cell is empty.  The shark's hunger is represented by the third parameter.
-   *  If the cell is already occupied, leave the cell as it is.  You will need
-   *  this method to help convert run-length encodings to Oceans.
-   *  @param x is the x-coordinate of the cell to place a shark in.
-   *  @param y is the y-coordinate of the cell to place a shark in.
-   *  @param feeding is an integer that indicates the shark's hunger.  You may
-   *         encode it any way you want; for instance, "feeding" may be the
-   *         last timestep the shark was fed, or the amount of time that has
-   *         passed since the shark was last fed, or the amount of time left
-   *         before the shark will starve.  It's up to you, but be consistent.
-   */
+    public int cellContents(int x, int y) {
+        return contents[yCoord(y)][xCoord(x)].type;
+    }
 
-  public void addShark(int x, int y, int feeding) {
-    // Your solution here.
-  }
+    /**
+     *  timeStep() performs a simulation timestep as described in README.
+     *  @return an ocean representing the elapse of one timestep.
+     */
 
-  /**
-   *  The following method is required for Part III.
-   */
+    public Ocean timeStep() {
+        Ocean nextOcean = new Ocean(width,height,starveTime);
+        for(int hidx=0; hidx <height; hidx++) {  // height index, y coord
+            for(int widx =0; widx<width; width++) {     // width index, x coord
+                // empty in original ocean
+                if(contents[yCoord(hidx)][xCoord(widx)].type==EMPTY) {
+                    nextOcean.cellEmpty(hidx,widx,nextOcean);
+                }
+                // fish in original ocean
+                if(contents[yCoord(hidx)][xCoord(widx)].type==FISH) {
+                    nextOcean.cellFish(hidx,widx,nextOcean);
+                }
+                // shark in original ocean
+                if(contents[yCoord(hidx)][xCoord(widx)].type==SHARK) {
+                    nextOcean.cellShark(hidx,widx,nextOcean);
+                }
+            }
+        }
 
-  /**
-   *  sharkFeeding() returns an integer that indicates the hunger of the shark
-   *  in cell (x, y), using the same "feeding" representation as the parameter
-   *  to addShark() described above.  If cell (x, y) does not contain a shark,
-   *  then its return value is undefined--that is, anything you want.
-   *  Normally, this method should not be called if cell (x, y) does not
-   *  contain a shark.  You will need this method to help convert Oceans to
-   *  run-length encodings.
-   *  @param x is the x-coordinate of the cell whose contents are queried.
-   *  @param y is the y-coordinate of the cell whose contents are queried.
-   */
+        return nextOcean;
+    }
 
-  public int sharkFeeding(int x, int y) {
-    // Replace the following line with your solution.
-    return 0;
-  }
+    /**
+     *  The following method is required for Part II.
+     */
+
+    /**
+     *  addShark() (with three parameters) places a shark in cell (x, y) if the
+     *  cell is empty.  The shark's hunger is represented by the third parameter.
+     *  If the cell is already occupied, leave the cell as it is.  You will need
+     *  this method to help convert run-length encodings to Oceans.
+     *  @param x is the x-coordinate of the cell to place a shark in.
+     *  @param y is the y-coordinate of the cell to place a shark in.
+     *  @param feeding is an integer that indicates the shark's hunger.  You may
+     *         encode it any way you want; for instance, "feeding" may be the
+     *         last timestep the shark was fed, or the amount of time that has
+     *         passed since the shark was last fed, or the amount of time left
+     *         before the shark will starve.  It's up to you, but be consistent.
+     */
+
+    public void addShark(int x, int y, int feeding) {
+        // Your solution here.
+    }
+
+    /**
+     *  The following method is required for Part III.
+     */
+
+    /**
+     *  sharkFeeding() returns an integer that indicates the hunger of the shark
+     *  in cell (x, y), using the same "feeding" representation as the parameter
+     *  to addShark() described above.  If cell (x, y) does not contain a shark,
+     *  then its return value is undefined--that is, anything you want.
+     *  Normally, this method should not be called if cell (x, y) does not
+     *  contain a shark.  You will need this method to help convert Oceans to
+     *  run-length encodings.
+     *  @param x is the x-coordinate of the cell whose contents are queried.
+     *  @param y is the y-coordinate of the cell whose contents are queried.
+     */
+
+    public int sharkFeeding(int x, int y) {
+        // Replace the following line with your solution.
+        return 0;
+    }
+
+    /** 
+     *  this is mostly for module testing 
+     */
+    public static void main(String[] argv) {
+        System.out.println("testing");
+        Ocean sea= new Ocean(5,2,1);
+    }
 
 }
