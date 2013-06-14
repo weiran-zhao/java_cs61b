@@ -53,8 +53,12 @@ public class DList {
    *  DList() constructor for an empty DList.
    */
   public DList() {
-    //  Your solution here.
+      // create sentinel
+      head = newNode(null,null,null);
+      head.prev=head;
+      head.next=head;
 
+      size=0;
   }
 
   /**
@@ -81,7 +85,11 @@ public class DList {
    *  Performance:  runs in O(1) time.
    */
   public void insertFront(Object item) {
-    // Your solution here.
+      DListNode tmp = newNode(item,head,head.next);
+      head.next.prev=tmp;
+      head.next=tmp;
+
+      size+=1;
   }
 
   /**
@@ -90,7 +98,11 @@ public class DList {
    *  Performance:  runs in O(1) time.
    */
   public void insertBack(Object item) {
-    // Your solution here.
+      DListNode tmp = newNode(item,head.prev,head);
+      head.prev.next=tmp;
+      head.prev=tmp;
+
+      size+=1;
   }
 
   /**
@@ -103,7 +115,10 @@ public class DList {
    *  Performance:  runs in O(1) time.
    */
   public DListNode front() {
-    // Your solution here.
+      if(size==0) {
+          return null;
+      }
+      return head.next;
   }
 
   /**
@@ -116,7 +131,10 @@ public class DList {
    *  Performance:  runs in O(1) time.
    */
   public DListNode back() {
-    // Your solution here.
+      if(size==0) {
+          return null;
+      }
+      return head.prev;
   }
 
   /**
@@ -130,7 +148,9 @@ public class DList {
    *  Performance:  runs in O(1) time.
    */
   public DListNode next(DListNode node) {
-    // Your solution here.
+      if((node==null) || (node.next==head))
+          return null;
+      return node.next;
   }
 
   /**
@@ -144,7 +164,9 @@ public class DList {
    *  Performance:  runs in O(1) time.
    */
   public DListNode prev(DListNode node) {
-    // Your solution here.
+      if((node==null) || (node.prev==head))
+          return null;
+      return node.prev;
   }
 
   /**
@@ -155,7 +177,12 @@ public class DList {
    *  Performance:  runs in O(1) time.
    */
   public void insertAfter(Object item, DListNode node) {
-    // Your solution here.
+      if(node!=null) {
+          DListNode tmp = newNode(item,node,node.next);
+          node.next.prev=tmp;
+          node.next=tmp;
+          size+=1;
+      }
   }
 
   /**
@@ -166,7 +193,12 @@ public class DList {
    *  Performance:  runs in O(1) time.
    */
   public void insertBefore(Object item, DListNode node) {
-    // Your solution here.
+      if(node!=null) {
+          DListNode tmp = newNode(item,node.prev,node);
+          node.prev.next=tmp;
+          node.prev=tmp;
+          size+=1;
+      }
   }
 
   /**
@@ -174,7 +206,13 @@ public class DList {
    *  Performance:  runs in O(1) time.
    */
   public void remove(DListNode node) {
-    // Your solution here.
+      if(size!=0){
+          if(node==null)
+              return;
+          node.next.prev=node.prev;
+          node.prev.next=node.next;
+          size-=1;
+      }
   }
 
   /**
@@ -193,5 +231,39 @@ public class DList {
       current = current.next;
     }
     return result + "]";
+  }
+  public static void main(String[] argv) {
+      System.out.println("testing");
+      DList lst = new DList();
+      System.out.println("length :"+lst.length());
+      System.out.println("is empty? "+lst.isEmpty());
+      System.out.println("Testing empty: " + lst);
+      lst.insertFront(3);
+      System.out.println("Testing insert front"+lst);
+      lst.insertBack(55.55);
+      System.out.println("Testing insert back"+ lst);
+      lst.insertFront(1000);
+      System.out.println("Testing insert front with 1000"+lst);
+      System.out.println("Testing front "+lst.front().item);
+      System.out.println("Testing back() "+lst.back().item);
+      // get node with 3
+      System.out.println("Testing next(), should be 3: "+lst.next(lst.head.next).item);
+      DListNode midNode=lst.next(lst.head.next);
+      // test insertAfter and insertBefore
+      lst.insertBefore("hello",midNode);
+      System.out.println("Testing insertBefore(): "+lst);
+      lst.insertAfter("what-ever",midNode);
+      System.out.println("Testing insertAfter(): "+lst);
+      // print length
+      System.out.println("Length :"+lst.length());
+      System.out.println("is empty?"+lst.isEmpty());
+
+      // testing prev
+      System.out.println("Testing prev(), should be hello:"+lst.prev(midNode).item);
+      // testing remove
+      for(int i=0; i<6;i++) {
+          lst.remove(lst.head.next);
+          System.out.println(lst+ "length is "+lst.length());
+      }
   }
 }
