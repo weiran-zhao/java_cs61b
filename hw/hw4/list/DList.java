@@ -258,12 +258,24 @@ public class DList {
       System.out.println("Length :"+lst.length());
       System.out.println("is empty?"+lst.isEmpty());
 
+      // try remove head
+      System.out.println("Trying to remove head");
+      lst.remove(lst.prev(lst.front()));
+      System.out.println(lst);
+
+      // try to corrupt the DList
+      System.out.println("Corrupting the list");
+      DListNode tmp = new DListNode(2,lst.front(),lst.back());
+      lst.insertAfter("shit",tmp);
+      System.out.println(lst+"length : " +lst.length());
+
       // testing prev
       System.out.println("Testing prev(), should be hello:"+lst.prev(midNode).item);
       // testing remove
       for(int i=0; i<6;i++) {
-          lst.remove(lst.head.next);
+          lst.remove(lst.head.prev);
           System.out.println(lst+ "length is "+lst.length());
       }
+
   }
 }

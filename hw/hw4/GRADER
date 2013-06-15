@@ -1,0 +1,10 @@
+It would be tring to create a DListNode not even in the DList and call
+insertAfter(), insertBefore(), prev(), next(), remove();
+This will corrupt the size field;
+Also the whole list
+============================================================
+How to resolve?
+From this website
+(http://gotfu.wordpress.com/2012/01/23/berkeley-cs61b-homework-4/)
+One way would be add an extra field in DListNode to record which list this node
+belongs to;
