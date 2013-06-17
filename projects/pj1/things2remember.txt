@@ -1,0 +1,3 @@
+1.  In java, except for primal data types, creating an array
+    type [] arr = new type[N]
+    ONLY create N number of variables (reference) to type, no object created
