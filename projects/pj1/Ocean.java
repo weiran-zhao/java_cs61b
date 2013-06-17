@@ -339,7 +339,8 @@ public class Ocean {
      */
 
     public void addShark(int x, int y, int feeding) {
-        // Your solution here.
+        contents[yCoord(y)][xCoord(x)].type=SHARK;
+        contents[yCoord(y)][xCoord(x)].hungerness=feeding;
     }
 
     /**
@@ -359,8 +360,7 @@ public class Ocean {
      */
 
     public int sharkFeeding(int x, int y) {
-        // Replace the following line with your solution.
-        return 0;
+        return contents[yCoord(y)][xCoord(x)].hungerness;
     }
 
     /** 
